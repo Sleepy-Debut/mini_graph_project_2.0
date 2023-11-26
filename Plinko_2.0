@@ -1,0 +1,96 @@
+# Makes a random list of 100 numbers and a corresponding graph
+import random
+
+list100 = []
+while len(list100) < 100:
+    newnum = random.randint(-50, 50)
+    if newnum not in list100:
+        list100.append(newnum)
+
+graph100 = {}
+for index, num in enumerate(list100):
+    index += 1
+    if index < 91:
+        if index % 10 == 0: 
+            graph100[num] = [list100[index + 8], list100[index + 9]]
+        elif index % 10 == 1:
+            graph100[num] = [list100[index + 9], list100[index + 10]]
+        else:
+            graph100[num] = [list100[index + 8], list100[index + 9], list100[index + 10]]
+
+
+#Uses DFS to find all possible connections from the top to the bottom
+def DFS(g, s):
+    E = [s]
+    stack = [s]
+    while stack:
+        nodes = stack.pop()
+        if nodes in g.keys():
+            for node in g[nodes]:
+                if node not in E:
+                    stack.append(node)
+                    E.append(node)
+    return E
+
+all_dfs = []
+end_nodes = list100[90:]
+start_nodes = list100[:10]
+
+for node in start_nodes:
+    temp_dfs = DFS(graph100, node)
+    all_dfs.append(temp_dfs)
+    if temp_dfs[-1] in end_nodes:
+        all_dfs.append(temp_dfs)
+
+
+#Find sum of the path and make it the first element in the tuple and the path the second element
+for index, lis in enumerate(all_dfs):
+    all_dfs[index] = (sum(lis), lis)
+
+all_dfs.sort()
+
+closest = (float('inf'),[])
+for sums, path in all_dfs:
+    if abs(sums-24) < closest[0]:
+        closest = (sums, path)
+
+all_dfs = [closest]
+
+import pygame
+pygame.init()
+
+white = (255, 255, 255)
+green = (0, 255, 0)
+blue = (0, 0, 128)
+
+X = 1000
+Y = 800
+
+display_surface = pygame.display.set_mode((X, Y))
+pygame.display.set_caption('Mini-Graph Project')
+
+font = pygame.font.Font('freesansbold.ttf', 32)
+
+display_surface.fill('black')
+
+x = [50, 150, 250, 350, 450, 550, 650, 750, 850, 950]
+y = [30, 110, 190, 270, 350, 430, 510, 590, 670, 750]
+
+for index, num in enumerate(list100):
+    #index += 1
+    text = font.render(str(num), True, 'white')
+    textRect = text.get_rect()
+    textRect.center = (x[index%10], y[index//10])
+    display_surface.blit(text, textRect)
+    #if num in all_dfs[1] and num != all_dfs[1][0]:
+    #print(all_dfs)
+    if num in all_dfs[0][1]:
+        othernum = all_dfs[0][1][all_dfs[0][1].index(num)-1]
+        otherindex = list100.index(othernum)
+        pygame.draw.line(display_surface, 'white', (x[otherindex%10], y[otherindex//10]), (x[index%10], y[index//10]), width=1)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()
+    pygame.display.update()
